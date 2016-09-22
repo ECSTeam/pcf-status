@@ -1,0 +1,5 @@
+package: github.com/ECSTeam/pcf-status
+license: Apache 2.0
+owners:
+- name: Martin Kreibe
+  email: mkreibe@ecsteam.com
