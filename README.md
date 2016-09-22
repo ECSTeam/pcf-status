@@ -35,5 +35,5 @@ It will then return:
 
 | Type | Url | Example |
 |:----:|:----|:--------|
-| ERT  | `http://<Application Route>/badge.svg?type=ert` | ![Ert](./img/ert.svg) |
-| Ops Man | `http://<Application Route>/badge.svg` <br> `http://<Application Route>/badge.svg?type=opsman` | ![OpsMan](./img/opsman.svg) |
+| ERT  | `http://<Application Route>/badge.svg?type=ert` | ![Ert](/img/ert.svg) |
+| Ops Man | `http://<Application Route>/badge.svg` <br> `http://<Application Route>/badge.svg?type=opsman` | ![OpsMan](/img/opsman.svg) |
