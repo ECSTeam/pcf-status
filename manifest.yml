@@ -1,9 +1,8 @@
 ---
-domain: apps.labc.ecsteam.io
 applications:
 - name: pcf-status
   host: status
-  memory: 56M
-  disk_quota: 56M
+  memory: 8M
+  disk_quota: 12M
   buildpack: go_buildpack
   instances: 1

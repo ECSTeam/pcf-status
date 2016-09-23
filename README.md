@@ -9,6 +9,11 @@ Simply push the application to you cloud foundry.
 > cf push -f manifest.yml
 ```
 
+for some of the older foundations, you may need to specify the go buildpack:
+```Bash
+> cf push -f manifest.yml -b https://github.com/cloudfoundry/go-buildpack.git
+```
+
 ## Configuration
 
 Apply the following configuration to the application instance.

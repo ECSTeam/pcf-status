@@ -76,7 +76,7 @@ func handlePanic(resp http.ResponseWriter, status int) {
 
 // httpHandler handles the http requests.
 func httpHandler(resp http.ResponseWriter, req *http.Request) {
-	defer handlePanic(resp, http.StatusNotFound)
+	defer handlePanic(resp, http.StatusInternalServerError)
 
 	var status Status
 	var err error
@@ -89,18 +89,25 @@ func httpHandler(resp http.ResponseWriter, req *http.Request) {
 				if bytes, err = json.Marshal(status); err == nil {
 					// First, add the headers as the Write will start streaming right away.
 					resp.Header().Add("Content-Type", "application/json")
+					resp.Header().Add("Cache-Control", "no-cache")
 					_, err = resp.Write(bytes)
 				}
 			}
 		case "/badge.svg":
 			{
 				resp.Header().Add("Content-Type", "image/svg+xml;charset=utf-8")
+				resp.Header().Add("Cache-Control", "no-cache")
 				svg := NewBadgeSvg(status, req.URL.Query().Get("type"))
 				err = svg.Write(resp)
 			}
 		default:
-			panic("Unknown route.")
+			err = errors.New("Unknown route.")
 		}
+	}
+
+	if err != nil {
+		resp.WriteHeader(http.StatusBadRequest)
+		resp.Write([]byte(err.Error()))
 	}
 }
 

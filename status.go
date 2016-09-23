@@ -2,13 +2,20 @@ package main
 
 // Status of this platform.
 type Status struct {
-
-	// Info is the
-	OpsManVersion string `json:"opsman-version"`
-	ErtVersion    string `json:"ert-version"`
+	Error         string `json:"error,omitempty"`
+	Legacy        bool   `json:"legacy"`
+	OpsManVersion string `json:"opsman-version,omitempty"`
+	ErtVersion    string `json:"ert-version,omitempty"`
 }
 
 var opsManClient *OpsManClient
+
+const (
+	legacyVersionString = "\u2264 1.6"
+
+	// UnknownVersionString holds the unknown version string.
+	UnknownVersionString = "unknown"
+)
 
 // NewStatus will create a new status object.
 func NewStatus() (status Status, err error) {
@@ -22,17 +29,25 @@ func NewStatus() (status Status, err error) {
 	info := DiagnosticReport{}
 	if err = opsManClient.GetInfo(&info); err == nil {
 
-		ertVer := "unknown"
-		for _, item := range info.Products.Deployed {
-			if item.Name == "cf" {
-				ertVer = item.Version
-				break
+		opsManVer := UnknownVersionString
+		ertVer := UnknownVersionString
+		if !info.Legacy {
+			opsManVer = info.Versions.Meta
+			for _, item := range info.Products.Deployed {
+				if item.Name == "cf" {
+					ertVer = item.Version
+					break
+				}
 			}
+		} else {
+			opsManVer = legacyVersionString
+			ertVer = legacyVersionString
 		}
 
 		status = Status{
-			OpsManVersion: info.Versions.Meta,
+			OpsManVersion: opsManVer,
 			ErtVersion:    ertVer,
+			Legacy:        info.Legacy,
 		}
 	}
 
