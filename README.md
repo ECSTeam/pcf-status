@@ -40,5 +40,5 @@ It will then return:
 
 | Type | Url | Example |
 |:----:|:----|:--------|
-| ERT  | `http://<Application Route>/badge.svg?type=ert` | ![Ert](./img/ert.svg) |
-| Ops Man | `http://<Application Route>/badge.svg` <br> `http://<Application Route>/badge.svg?type=opsman` | ![OpsMan](./img/opsman.svg) |
+| ERT  | `http://<Application Route>/badge.svg?type=ert` | ![Ert](https://cdn.rawgit.com/ECSTeam/pcf-status/master/img/ert.svg) |
+| Ops Man | `http://<Application Route>/badge.svg` <br> `http://<Application Route>/badge.svg?type=opsman` | ![OpsMan](https://cdn.rawgit.com/ECSTeam/pcf-status/master/img/opsman.svg) |
