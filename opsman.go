@@ -59,7 +59,7 @@ func NewOpsManClient() (opsManClient *OpsManClient, err error) {
 	address := os.Getenv("UAA_ADDRESS")
 	password := os.Getenv("OPSMAN_PASSWORD")
 	if len(user) == 0 || len(address) == 0 || len(password) == 0 {
-		err = errors.New("Environment is not setup correctly.")
+		err = errors.New("Misconfigured")
 		return
 	}
 

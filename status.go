@@ -21,33 +21,40 @@ const (
 func NewStatus() (status Status, err error) {
 
 	if opsManClient == nil {
-		if opsManClient, err = NewOpsManClient(); err != nil {
-			return
+		if opsManClient, err = NewOpsManClient(); err == nil {
+			info := DiagnosticReport{}
+			if err = opsManClient.GetInfo(&info); err == nil {
+
+				opsManVer := UnknownVersionString
+				ertVer := UnknownVersionString
+				if !info.Legacy {
+					opsManVer = info.Versions.Meta
+					for _, item := range info.Products.Deployed {
+						if item.Name == "cf" {
+							ertVer = item.Version
+							break
+						}
+					}
+				} else {
+					opsManVer = legacyVersionString
+					ertVer = legacyVersionString
+				}
+
+				status = Status{
+					OpsManVersion: opsManVer,
+					ErtVersion:    ertVer,
+					Legacy:        info.Legacy,
+				}
+			}
 		}
 	}
 
-	info := DiagnosticReport{}
-	if err = opsManClient.GetInfo(&info); err == nil {
-
-		opsManVer := UnknownVersionString
-		ertVer := UnknownVersionString
-		if !info.Legacy {
-			opsManVer = info.Versions.Meta
-			for _, item := range info.Products.Deployed {
-				if item.Name == "cf" {
-					ertVer = item.Version
-					break
-				}
-			}
-		} else {
-			opsManVer = legacyVersionString
-			ertVer = legacyVersionString
-		}
-
+	if err != nil {
 		status = Status{
-			OpsManVersion: opsManVer,
-			ErtVersion:    ertVer,
-			Legacy:        info.Legacy,
+			Error:         err.Error(),
+			OpsManVersion: "",
+			ErtVersion:    "",
+			Legacy:        false,
 		}
 	}
 

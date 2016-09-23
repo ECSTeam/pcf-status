@@ -35,27 +35,27 @@ func NewBadgeSvg(status Status, returnType string) (badge BadgeSvg) {
 		Version: UnknownVersionString,
 	}
 
-	switch strings.ToLower(returnType) {
-	case "ert":
-		badge.HighlightColor = goodColor
-		badge.Version = status.ErtVersion
-		badge.Name = "ERT"
-	case "", "opsman":
-		badge.HighlightColor = goodColor
-		badge.Version = status.OpsManVersion
-		badge.Name = "Ops Man"
-	default:
-		break
-	}
-
-	if status.Legacy {
-		badge.HighlightColor = legacyColor
-	}
-
 	if len(status.Error) > 0 {
 		badge.HighlightColor = errorColor
 		badge.Version = status.Error
 		badge.Name = "PCF"
+	} else {
+		switch strings.ToLower(returnType) {
+		case "ert":
+			badge.HighlightColor = goodColor
+			badge.Version = status.ErtVersion
+			badge.Name = "ERT"
+		case "", "opsman":
+			badge.HighlightColor = goodColor
+			badge.Version = status.OpsManVersion
+			badge.Name = "Ops Man"
+		default:
+			break
+		}
+
+		if status.Legacy {
+			badge.HighlightColor = legacyColor
+		}
 	}
 
 	badge.HeaderWidth = (2 * bufferWidth) + (len(badge.Name) * characterWidth)
