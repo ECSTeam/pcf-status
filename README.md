@@ -26,19 +26,17 @@ Apply the following configuration to the application instance.
 
 ## Raw Data
 
-You can query the application using the following route: `http://<Application Route>/`
+You can query the application using the following route: `http://<Application Route>/versions`
 
 It will then return:
 ```JSON
 {
-  "opsman-version": "1.7",
-  "ert-version":    "1.7.21-build.2"
+  "versions": {
+    "ERT": "1.7.20-build.2",
+    "Ops Man": "1.7"
+  }
 }
 ```
 
 ## Badges
-
-| Type | Url | Example |
-|:----:|:----|:--------|
-| ERT  | `http://<Application Route>/badge.svg?type=ert` | ![Ert](https://cdn.rawgit.com/ECSTeam/pcf-status/master/img/ert.svg) |
-| Ops Man | `http://<Application Route>/badge.svg` <br> `http://<Application Route>/badge.svg?type=opsman` | ![OpsMan](https://cdn.rawgit.com/ECSTeam/pcf-status/master/img/opsman.svg) |
+Badges have been removed and another project controls them now: https://github.com/ECSTeam/status-badge
