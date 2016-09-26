@@ -13,6 +13,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/rs/cors"
 )
 
 // port and portFlag handle the port for this application. The default is
@@ -78,27 +80,25 @@ func handlePanic(resp http.ResponseWriter, status int) {
 func httpHandler(resp http.ResponseWriter, req *http.Request) {
 	defer handlePanic(resp, http.StatusInternalServerError)
 
-	status, err := NewStatus()
-
+	var err error
 	switch req.URL.Path {
-	case "/":
+	case "/versions":
 		{
-			if err == nil {
-				var bytes []byte
-				if bytes, err = json.Marshal(status); err == nil {
-					// First, add the headers as the Write will start streaming right away.
-					resp.Header().Add("Content-Type", "application/json")
-					resp.Header().Add("Cache-Control", "no-cache")
-					_, err = resp.Write(bytes)
+			switch req.Method {
+			case "GET":
+				{
+					var status *Status
+					if status, err = NewStatus(); err == nil {
+						var bytes []byte
+						if bytes, err = json.Marshal(status); err == nil {
+							// First, add the headers as the Write will start streaming right away.
+							resp.Header().Set("Content-Type", "application/json")
+							resp.Header().Set("Cache-Control", "no-cache")
+							_, err = resp.Write(bytes)
+						}
+					}
 				}
 			}
-		}
-	case "/badge.svg":
-		{
-			resp.Header().Add("Content-Type", "image/svg+xml;charset=utf-8")
-			resp.Header().Add("Cache-Control", "no-cache")
-			svg := NewBadgeSvg(status, req.URL.Query().Get("type"))
-			err = svg.Write(resp)
 		}
 	default:
 		err = errors.New("Unknown route.")
@@ -114,10 +114,14 @@ func httpHandler(resp http.ResponseWriter, req *http.Request) {
 func main() {
 	log.Print("Starting application")
 
-	http.HandleFunc("/", httpHandler)
+	c := cors.New(cors.Options{
+		AllowedMethods: []string{"GET"},
+	})
+
+	handler := http.HandlerFunc(httpHandler)
 
 	endpoint := fmt.Sprintf("%s:%d", host, port)
-	if err := http.ListenAndServe(endpoint, nil); err != nil {
+	if err := http.ListenAndServe(endpoint, c.Handler(handler)); err != nil {
 		log.Fatalf("Failed to listen on endpoint '%s': %s", endpoint, err.Error())
 	} else {
 		log.Printf("Started application on endpoint: '%s'", endpoint)
