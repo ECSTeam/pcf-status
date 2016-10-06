@@ -1,6 +1,10 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // Status of this platform.
 type Status struct {
@@ -49,10 +53,10 @@ func NewStatus() (status *Status, err error) {
 
 						// Ignore empty values.
 						if len(name) > 0 {
-							status.Versions[name] = item.Version
+							status.Versions[name] = fmt.Sprintf("%s (stemcell %s)", item.Version, sanitizeStemcellName(item.Stemcell))
 						}
 					} else {
-						status.Versions[item.Name] = item.Version
+						status.Versions[item.Name] = fmt.Sprintf("%s (stemcell %s)", item.Version, sanitizeStemcellName(item.Stemcell))
 					}
 				}
 			} else {
@@ -79,4 +83,13 @@ func NewStatus() (status *Status, err error) {
 	}
 
 	return
+}
+
+func sanitizeStemcellName(stemcell string) string {
+	parts := strings.Split(stemcell, "-")
+	if len(parts) >= 3 {
+		return parts[2]
+	}
+
+	return stemcell
 }

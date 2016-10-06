@@ -35,8 +35,9 @@ type DiagnosticReport struct {
 
 	Products struct {
 		Deployed []struct {
-			Name    string `json:"name"`
-			Version string `json:"version"`
+			Name     string `json:"name"`
+			Version  string `json:"version"`
+			Stemcell string `json:"stemcell"`
 		} `json:"deployed"`
 	} `json:"added_products"`
 }
