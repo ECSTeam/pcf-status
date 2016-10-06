@@ -3,6 +3,5 @@ applications:
 - name: pcf-status
   host: status
   memory: 8M
-  disk_quota: 12M
   buildpack: go_buildpack
   instances: 1
