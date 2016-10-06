@@ -66,15 +66,15 @@ func NewStatus() (status *Status, err error) {
 		}
 	}
 
-	if status == nil {
-		err = errors.New("Unknown status")
-	} else if len(status.Versions) == 0 {
-		err = errors.New("No versions found")
-	}
-
 	if err != nil {
 		status = &Status{
 			Error: err.Error(),
+		}
+	} else {
+		if status == nil {
+			err = errors.New("Unknown status")
+		} else if len(status.Versions) == 0 {
+			err = errors.New("No versions found")
 		}
 	}
 
