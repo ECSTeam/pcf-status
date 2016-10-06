@@ -24,3 +24,4 @@ debug
 *.exe
 *.test
 *.prof
+vendor/
