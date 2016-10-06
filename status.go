@@ -13,7 +13,21 @@ const (
 
 	// UnknownVersionString holds the unknown version string.
 	UnknownVersionString = "unknown"
+
+	// These are the labels for opsman and ERT. They have the special
+	// characters to ensure they are sorted first.
+	nameOpsMan = "\001Ops Man"
+	nameErt    = "\002ERT"
 )
+
+// StandardNames are the mappings between labels and nice names.
+// NOTE: Add tile translations here: if the value is empty, then that
+//       entry will be ignored.
+var StandardNames = map[string]string{
+	"cf":      nameErt,
+	"p-bosh":  "",
+	"p-mysql": "MySql Tile",
+}
 
 // NewStatus will create a new status object.
 func NewStatus() (status *Status, err error) {
@@ -23,26 +37,31 @@ func NewStatus() (status *Status, err error) {
 		info := DiagnosticReport{}
 		if err = opsManClient.GetInfo(&info); err == nil {
 
-			opsManVer := UnknownVersionString
-			ertVer := UnknownVersionString
 			if !info.Legacy {
-				opsManVer = info.Versions.Meta
+				status = &Status{
+					Versions: map[string]string{
+						nameOpsMan: info.Versions.Release,
+					},
+				}
+
 				for _, item := range info.Products.Deployed {
-					if item.Name == "cf" {
-						ertVer = item.Version
-						break
+					if name, ok := StandardNames[item.Name]; ok {
+
+						// Ignore empty values.
+						if len(name) > 0 {
+							status.Versions[name] = item.Version
+						}
+					} else {
+						status.Versions[item.Name] = item.Version
 					}
 				}
 			} else {
-				opsManVer = legacyVersionString
-				ertVer = legacyVersionString
-			}
-
-			status = &Status{
-				Versions: map[string]string{
-					"Ops Man": opsManVer,
-					"ERT":     ertVer,
-				},
+				status = &Status{
+					Versions: map[string]string{
+						nameOpsMan: legacyVersionString,
+						nameErt:    legacyVersionString,
+					},
+				}
 			}
 		}
 	}

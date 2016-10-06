@@ -94,6 +94,11 @@ func httpHandler(resp http.ResponseWriter, req *http.Request) {
 							// First, add the headers as the Write will start streaming right away.
 							resp.Header().Set("Content-Type", "application/json")
 							resp.Header().Set("Cache-Control", "no-cache")
+
+							// TODO: we may need to remove the \u0001 and \u0002 from the
+							//       result because this was a hack to sort the labels
+							//       correctly. The SVG though doesn't mind.
+
 							_, err = resp.Write(bytes)
 						}
 					}
