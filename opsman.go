@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 /*
@@ -35,10 +36,13 @@ type DiagnosticReport struct {
 
 	Products struct {
 		Deployed []struct {
-			Name    string `json:"name"`
-			Version string `json:"version"`
+			Name     string `json:"name"`
+			Version  string `json:"version"`
+			Stemcell string `json:"stemcell"`
 		} `json:"deployed"`
 	} `json:"added_products"`
+
+	Stemcells []string `json:"stemcells"`
 }
 
 // OAuthPayload is the wrapper for the oauth token.
@@ -91,7 +95,18 @@ func codeIsGood(code int) bool {
 func (opsManClient *OpsManClient) GetInfo(report *DiagnosticReport) (err error) {
 	err = opsManClient.callURL("/api/v0/diagnostic_report.json", func(code int, data []byte) (e error) {
 		if codeIsGood(code) {
-			e = json.Unmarshal(data, report)
+			if e = json.Unmarshal(data, report); e == nil {
+
+				// cleanup the stemcell versions here.
+				for index, prod := range report.Products.Deployed {
+
+					// This is assuming that the format will not change...
+					// currently it is: bosh-stemcell-3232.19-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+					if parts := strings.Split(prod.Stemcell, "-"); len(parts) >= 3 {
+						report.Products.Deployed[index].Stemcell = parts[2]
+					}
+				}
+			}
 		} else if code == http.StatusNotFound {
 			report.Legacy = true
 		}

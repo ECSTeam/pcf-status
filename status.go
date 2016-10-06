@@ -2,10 +2,16 @@ package main
 
 import "errors"
 
+// Version of the item.
+type Version struct {
+	Version  string `json:"ver,omitempty"`
+	StemCell string `json:"sc,omitempty"`
+}
+
 // Status of this platform.
 type Status struct {
-	Error    string            `json:"error,omitempty"`
-	Versions map[string]string `json:"versions,omitempty"`
+	Error    string             `json:"error,omitempty"`
+	Versions map[string]Version `json:"versions,omitempty"`
 }
 
 const (
@@ -30,7 +36,7 @@ var StandardNames = map[string]string{
 }
 
 // NewStatus will create a new status object.
-func NewStatus() (status *Status, err error) {
+func NewStatus(includes *Includes) (status *Status, err error) {
 
 	var opsManClient *OpsManClient
 	if opsManClient, err = NewOpsManClient(); err == nil {
@@ -39,27 +45,41 @@ func NewStatus() (status *Status, err error) {
 
 			if !info.Legacy {
 				status = &Status{
-					Versions: map[string]string{
-						nameOpsMan: info.Versions.Release,
+					Versions: map[string]Version{
+						nameOpsMan: Version{
+							Version: info.Versions.Release,
+						},
 					},
 				}
 
 				for _, item := range info.Products.Deployed {
+
+					stemcell := ""
+					if includes.StemCellVersion {
+						stemcell = item.Stemcell
+					}
+
 					if name, ok := StandardNames[item.Name]; ok {
 
 						// Ignore empty values.
 						if len(name) > 0 {
-							status.Versions[name] = item.Version
+							status.Versions[name] = Version{
+								Version:  item.Version,
+								StemCell: stemcell,
+							}
 						}
 					} else {
-						status.Versions[item.Name] = item.Version
+						status.Versions[item.Name] = Version{
+							Version:  item.Version,
+							StemCell: stemcell,
+						}
 					}
 				}
 			} else {
 				status = &Status{
-					Versions: map[string]string{
-						nameOpsMan: legacyVersionString,
-						nameErt:    legacyVersionString,
+					Versions: map[string]Version{
+						nameOpsMan: {Version: legacyVersionString},
+						nameErt:    {Version: legacyVersionString},
 					},
 				}
 			}

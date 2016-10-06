@@ -87,8 +87,10 @@ func httpHandler(resp http.ResponseWriter, req *http.Request) {
 			switch req.Method {
 			case "GET":
 				{
+					includes := NewIncludes(req.URL.Query())
+
 					var status *Status
-					if status, err = NewStatus(); err == nil {
+					if status, err = NewStatus(includes); err == nil {
 						var bytes []byte
 						if bytes, err = json.Marshal(status); err == nil {
 							// First, add the headers as the Write will start streaming right away.
