@@ -26,14 +26,44 @@ Apply the following configuration to the application instance.
 
 ## Raw Data
 
+Note that for sorting reasons, we inject the `\u0001` and `\0002`. This may not be a great
+implementation, but it helped keep the Ops Man and ERT in the order we wanted.
+
 You can query the application using the following route: `http://<Application Route>/versions`
 
 It will then return:
 ```JSON
 {
-  "versions": {
-    "ERT": "1.7.20-build.2",
-    "Ops Man": "1.7"
+  "versions":{
+    "\u0001Ops Man":{
+      "ver":"1.7.13.0"
+    },
+    "\u0002ERT":{
+      "ver":"1.7.21-build.2"
+    },
+    "MySql Tile":{
+      "ver":"1.7.13"
+    }
+  }
+}
+```
+
+To include the stemcell versions, use the following url: `http://<Application Route>/versions?svc=true`
+
+```JSON
+{
+  "versions":{
+    "\u0001Ops Man":{
+      "ver":"1.7.13.0"
+    },
+    "\u0002ERT":{
+      "ver":"1.7.21-build.2",
+      "sc":"3232.19"
+    },
+    "MySql Tile":{
+      "ver":"1.7.13",
+      "sc":"3232.19"
+    }
   }
 }
 ```
