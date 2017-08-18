@@ -1,11 +1,6 @@
-/*main is the entry point package for this application.
- *
- */
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -13,124 +8,132 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/rs/cors"
+	"github.com/ECSTeam/pcf-status/helpers"
+	"github.com/ECSTeam/pcf-status/models"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+)
+
+const (
+	defaultPort         = 8080
+	defaultReadTimeout  = 15
+	defaultWriteTimeout = 15
+)
+
+var (
+	routes = []helpers.RouteDefinition{
+		models.ProductCollectionRoutesDefinition,
+		models.ProductRoutesDefinition,
+		models.VMCollectionRoutesDefinition,
+		models.BuildpacksCollectionRoutesDefinition,
+		models.InfoRoutesDefinition,
+	}
 )
 
 // port and portFlag handle the port for this application. The default is
 // arbitrarily set to 8080.
-var port int
-var host string
 var (
-	portFlag = flag.Int("port", 8080, "The port to use.")
+	portFlag = flag.Int("port", defaultPort, "The port to use.")
 	hostFlag = flag.String("host", "", "The host name.")
+
+	opsManAddrFlag  = flag.String("opsman", "", "The OpsMan address.")
+	opsUaaAddrFlag  = flag.String("opsmanuaa", "", "The OPsMan UAA address.")
+	opsUserFlag     = flag.String("opsmanuser", "", "The OpsMan user.")
+	opsPasswordFlag = flag.String("opsmanpassword", "", "The OpsMan password.")
+
+	appsManAddrFlag  = flag.String("appsman", "", "The AppsMan address.")
+	appsUaaAddrFlag  = flag.String("appsmanuaa", "", "The AppsMan UAA address.")
+	appsUserFlag     = flag.String("appsmanuser", "", "The AppsMan user.")
+	appsPasswordFlag = flag.String("appsmanpassword", "", "The AppsMan password.")
 )
 
-// init the program.
-func init() {
-	var err error
-	log.Print("Initializing the application")
-	flag.Parse()
+// APIs defines the api collection
+type APIs map[helpers.APIType]helpers.API
 
-	portStr := os.Getenv("PORT")
-	if port, err = strconv.Atoi(portStr); err != nil {
-		port = *portFlag
-		err = nil
+// getParam from the env or cmd line. Env takes proirity.
+func getParam(env string, cmd *string) string {
+	param := os.Getenv(env)
+	if len(strings.TrimSpace(param)) <= 0 {
+		param = *cmd
 	}
 
-	host = os.Getenv("HOST")
-	if len(strings.TrimSpace(host)) <= 0 {
-		host = *hostFlag
-	}
+	log.Printf("[%s]: %s", env, param)
+	return param
 }
 
-// reportError will report an error result.
-func reportError(err error, format string, resp http.ResponseWriter, status int) {
-	log.Printf("Unable to get status: %s", err.Error())
-	resp.WriteHeader(status)
-	resp.Write([]byte(err.Error()))
-}
+// createAPIs will generate the collection of apis.
+func createAPIs() (apis APIs, err error) {
 
-// handlePanic will capture any panics and return a message to the output.
-func handlePanic(resp http.ResponseWriter, status int) {
-	if p := recover(); p != nil {
+	opsManUaa := getParam("OPSMAN_UAA_ADDRESS", opsUaaAddrFlag)
+	opsManAddr := getParam("OPSMAN_ADDRESS", opsManAddrFlag)
+	opsUser := getParam("OPSMAN_USER", opsUserFlag)
+	opsPassword := getParam("OPSMAN_PASSWORD", opsPasswordFlag)
 
-		messageFmt := "Unhandled panic: %s"
-		var err error
+	var api helpers.API
+	if api, err = helpers.NewOpsManAPI(opsManUaa, opsManAddr, opsUser, opsPassword); err == nil {
 
-		switch p.(type) {
-		case nil:
-			// normal case, just ignore.
-		case string:
-			messageFmt = p.(string)
-			err = errors.New(messageFmt)
-		case error:
-			err = p.(error)
-		default:
-			err = errors.New(fmt.Sprint(p))
-		}
+		apis = APIs{}
+		apis[helpers.OpsMan] = api
 
-		if err != nil {
-			reportError(err, messageFmt, resp, status)
+		appsManUaa := getParam("APPSMAN_UAA_ADDRESS", appsUaaAddrFlag)
+		appsManAddr := getParam("APPSMAN_ADDRESS", appsManAddrFlag)
+		appsUser := getParam("APPSMAN_USER", appsUserFlag)
+		appsPassword := getParam("APPSMAN_PASSWORD", appsPasswordFlag)
+
+		if api, err = helpers.NewAppsManAPI(appsManUaa, appsManAddr, appsUser, appsPassword); err == nil {
+			apis[helpers.AppsMan] = api
 		}
 	}
-}
 
-// httpHandler handles the http requests.
-func httpHandler(resp http.ResponseWriter, req *http.Request) {
-	defer handlePanic(resp, http.StatusInternalServerError)
-
-	var err error
-	switch req.URL.Path {
-	case "/versions":
-		{
-			switch req.Method {
-			case "GET":
-				{
-					includes := NewIncludes(req.URL.Query())
-
-					var status *Status
-					if status, err = NewStatus(includes); err == nil {
-						var bytes []byte
-						if bytes, err = json.Marshal(status); err == nil {
-							// First, add the headers as the Write will start streaming right away.
-							resp.Header().Set("Content-Type", "application/json")
-							resp.Header().Set("Cache-Control", "no-cache")
-
-							// TODO: we may need to remove the \u0001 and \u0002 from the
-							//       result because this was a hack to sort the labels
-							//       correctly. The SVG though doesn't mind.
-
-							_, err = resp.Write(bytes)
-						}
-					}
-				}
-			}
-		}
-	default:
-		err = errors.New("Unknown route.")
-	}
-
-	if err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write([]byte(err.Error()))
-	}
+	return apis, err
 }
 
 // main entry point.
 func main() {
-	log.Print("Starting application")
 
-	c := cors.New(cors.Options{
-		AllowedMethods: []string{"GET"},
-	})
+	log.Print("Initializing the application")
+	flag.Parse()
 
-	handler := http.HandlerFunc(httpHandler)
+	var apis APIs
+	var err error
+	if apis, err = createAPIs(); err == nil {
+		r := mux.NewRouter()
 
-	endpoint := fmt.Sprintf("%s:%d", host, port)
-	if err := http.ListenAndServe(endpoint, c.Handler(handler)); err != nil {
-		log.Fatalf("Failed to listen on endpoint '%s': %s", endpoint, err.Error())
-	} else {
-		log.Printf("Started application on endpoint: '%s'", endpoint)
+		// CORS definition.
+		orig := handlers.AllowedOrigins([]string{"*"})
+		corsHandler := handlers.CORS(orig)(r)
+
+		port := defaultPort
+		if portStr := os.Getenv("PORT"); len(portStr) > 0 {
+			if port, err = strconv.Atoi(portStr); err != nil {
+				port = *portFlag
+			}
+		}
+
+		host := os.Getenv("HOST")
+		if len(strings.TrimSpace(host)) <= 0 {
+			host = *hostFlag
+		}
+
+		addr := fmt.Sprintf("%s:%d", host, port)
+		log.Printf("Starting application: %s", addr)
+
+		srv := &http.Server{
+			Handler:      corsHandler,
+			Addr:         addr,
+			WriteTimeout: defaultWriteTimeout * time.Second,
+			ReadTimeout:  defaultReadTimeout * time.Second,
+		}
+
+		for _, route := range routes {
+			log.Printf("Route: [%s] %s", route.Method, route.Path)
+			r.Methods(route.Method).Path(route.Path).Handler(route.Handler(apis[route.APIType]))
+		}
+
+		err = srv.ListenAndServe()
 	}
+
+	log.Fatalf("Failed to start: %v", err)
 }

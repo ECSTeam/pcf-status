@@ -25,3 +25,5 @@ debug
 *.test
 *.prof
 vendor/
+
+manifest.yml

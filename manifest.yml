@@ -1,7 +1,0 @@
----
-applications:
-- name: pcf-status
-  host: status
-  memory: 8M
-  buildpack: go_buildpack
-  instances: 1
