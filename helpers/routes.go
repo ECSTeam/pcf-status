@@ -14,12 +14,16 @@ const (
 
 	// AppsMan is the indicator of the AppsMan API.
 	AppsMan = APIType("AppsMan")
+
+	// None is the no api response
+	None = APIType("None")
 )
 
 // RouteDefinition stores information about the route.
 type RouteDefinition struct {
-	Method  string
-	Path    string
-	APIType APIType
-	Handler func(api API) http.HandlerFunc
+	Method     string
+	Path       string
+	APIType    APIType
+	Handler    func(api API) http.HandlerFunc
+	RawHandler http.Handler
 }

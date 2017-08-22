@@ -1,0 +1,35 @@
+{{define "data"}}
+{{template "top" .}}
+<div class="container">
+	<div class="row">
+		<h3>Foo</h3>
+	</div>
+</div>
+<div class="container">
+	<div class="row">
+		<div class="card-columns">
+			{{range .Card}}
+			<div class="card">
+    		<div class="card-body">
+      		<h4 class="card-title">{{.Title}}</h4>
+					{{if .Description}}
+					<p class="card-text">{{.Description}}</p>
+					{{end}}
+					{{if .Href}}
+					<a href="{{.Href}}" class="btn btn-primary">Details</a>
+					{{end}}
+				</div>
+				{{if .ListItem}}
+				<ul class="list-group list-group-flush">
+					{{range .ListItem}}
+			    <li class="list-group-item">{{.Value}}</li>
+					{{end}}
+			  </ul>
+				{{end}}
+			</div>
+			{{end}}
+		</div>
+	</div>
+</div>
+{{template "bottom" .}}
+{{end}}

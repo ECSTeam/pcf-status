@@ -12,6 +12,18 @@ import (
 	"strings"
 )
 
+const (
+
+	// MimeTypePlainText defines the plain text mime type
+	MimeTypePlainText = "text/plain"
+
+	// MimeTypeJSON defines the json mime type
+	MimeTypeJSON = "application/json"
+
+	// MimeTypeHTML defines the html mime type
+	MimeTypeHTML = "text/html"
+)
+
 // callHandler will handle calls from a url.
 type callHandler func(int, []byte) error
 
@@ -19,7 +31,6 @@ type callHandler func(int, []byte) error
 type API interface {
 	Get(string, interface{}) error
 	MakeAPIURL(items ...string) string
-	CreateHandler(func(*http.Request, API) (interface{}, error)) http.HandlerFunc
 }
 
 // opsManAPI is the implementation of the OpsManApi interface
@@ -46,32 +57,23 @@ func (api *baseAPI) MakeAPIURL(items ...string) string {
 }
 
 // GetSlice will return a slice from the path.
-func (api *baseAPI) Get(path string, slicePtr interface{}) (err error) {
-	return api.callURL(http.MethodGet, api.MakeAPIURL(path), func(status int, body []byte) (e error) {
-		return json.Unmarshal(body, slicePtr)
+func (api *baseAPI) Get(path string, value interface{}) (err error) {
+	return api.callURLWithToken(http.MethodGet, api.MakeAPIURL(path), func(status int, body []byte) (e error) {
+		return json.Unmarshal(body, value)
 	})
 }
 
-// CreateHandler creates an http handler
-func (api *baseAPI) CreateHandler(handler func(*http.Request, API) (interface{}, error)) http.HandlerFunc {
+// RequestWrapper will wrap the request.
+func RequestWrapper(handler func(*http.Request) (int, string, []byte, error)) http.HandlerFunc {
 	return func(writer http.ResponseWriter, req *http.Request) {
+		var contentType string
+		var status int
 		var body []byte
 		var err error
 
-		status := http.StatusNotImplemented
-		contentType := "text/plain"
-
-		var data interface{}
-		if data, err = handler(req, api); err == nil {
-			if body, err = json.Marshal(data); err == nil {
-				status = http.StatusOK
-				contentType = "application/json"
-			}
-		}
-
-		if err != nil {
+		if status, contentType, body, err = handler(req); err != nil {
 			status = http.StatusNotAcceptable
-			contentType = "text/plain"
+			contentType = MimeTypePlainText
 			body = []byte(err.Error())
 		}
 
@@ -79,6 +81,24 @@ func (api *baseAPI) CreateHandler(handler func(*http.Request, API) (interface{},
 		writer.WriteHeader(status)
 		writer.Write(body)
 	}
+}
+
+// CreateHandler creates an http handler
+func CreateHandler(api API, handler func(*http.Request, API) (interface{}, error)) http.HandlerFunc {
+	return RequestWrapper(func(req *http.Request) (status int, contentType string, body []byte, err error) {
+		status = http.StatusNotImplemented
+		contentType = MimeTypePlainText
+
+		var data interface{}
+		if data, err = handler(req, api); err == nil {
+			if body, err = json.Marshal(data); err == nil {
+				status = http.StatusOK
+				contentType = MimeTypeJSON
+			}
+		}
+
+		return status, contentType, body, err
+	})
 }
 
 // getToken return the auth token.
@@ -89,7 +109,7 @@ func (api *baseAPI) getToken() (token string, err error) {
 		log.Printf("Getting new auth token: %s", api.user)
 
 		var client *http.Client
-		if client, err = api.newClient(); err == nil {
+		if client, err = newClient(); err == nil {
 
 			// using this: https://docs.cloudfoundry.org/api/uaa/#password-grant
 			// but the documentation does not include the auth header.
@@ -163,28 +183,46 @@ func (api *baseAPI) getToken() (token string, err error) {
 }
 
 // callUrl will call the url and add the appropriate headers.
-func (api *baseAPI) callURL(method string, url string, operation callHandler) (err error) {
+func (api *baseAPI) callURLWithToken(method string, url string, operation callHandler) (err error) {
+	var token string
+	if token, err = api.getToken(); err == nil {
+		callURL(method, url, map[string]string{
+			"Authorization": token,
+		}, operation)
+	}
 
+	return err
+}
+
+// callURL will call a URL
+func callURL(method string, url string, headers map[string]string, operation callHandler) (err error) {
 	var client *http.Client
-	if client, err = api.newClient(); err == nil {
+	if client, err = newClient(); err == nil {
 		var req *http.Request
 		if req, err = http.NewRequest(method, url, nil); err == nil {
 
-			var token string
-			if token, err = api.getToken(); err == nil {
-				req.Header.Add("Authorization", token)
-				req.Header.Add("Accept", "application/json")
+			req.Header.Add("Accept", "application/json") // Make sure the output is a json.
+			if headers != nil {
+				for name, value := range headers {
+					if len(req.Header.Get(name)) == 0 {
+						req.Header.Add(name, value)
+					} else {
+						req.Header.Set(name, value)
+					}
+				}
+			}
 
-				var resp *http.Response
-				if resp, err = client.Do(req); err == nil {
-					defer resp.Body.Close()
+			var resp *http.Response
 
-					var body []byte
-					code := resp.StatusCode
-					if code >= http.StatusOK && code < http.StatusBadRequest {
-						if body, err = ioutil.ReadAll(resp.Body); err == nil {
-							err = operation(code, body)
-						}
+			log.Printf("Calling: %s", req.URL.String())
+			if resp, err = client.Do(req); err == nil {
+				defer resp.Body.Close()
+
+				var body []byte
+				code := resp.StatusCode
+				if code >= http.StatusOK && code < http.StatusBadRequest {
+					if body, err = ioutil.ReadAll(resp.Body); err == nil {
+						err = operation(code, body)
 					}
 				}
 			}
@@ -195,7 +233,7 @@ func (api *baseAPI) callURL(method string, url string, operation callHandler) (e
 }
 
 // newClient creates a new client.
-func (api *baseAPI) newClient() (client *http.Client, err error) {
+func newClient() (client *http.Client, err error) {
 	client = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{

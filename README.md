@@ -15,6 +15,10 @@ for some of the older foundations, you may need to specify the go buildpack:
 ```
 
 ```
+> go run main.go -opsmanuaa https://172.28.61.5/uaa -opsman https://172.28.61.5 -opsmanuser admin -opsmanpassword welcome1 -appsmanuaa https://uaa.system.lab06.den.ecsteam.io -appsmanpassword JPTvnTxOR_6-5YPfhUA3EWruvg1a26rg -appsmanuser admin -appsman https://api.system.lab06.den.ecsteam.io
+```
+
+```
 > glide install
 ```
 
@@ -40,55 +44,46 @@ applications:
   buildpack: go_buildpack
   instances: 1
   env:
-    UAA_ADDRESS: https://uaa.system.example.com/
+    OPSMAN_UAA_ADDRESS: https://<ops-man-ip>/uaa
+    OPSMAN_ADDRESS: https://<ops-man-ip>
     OPSMAN_USER: admin
-    OPSMAN_PASSWORD: superpasswordthatkillsusall
+    OPSMAN_PASSWORD:  <ops-man-password>
+    APPSMAN_UAA_ADDRESS: https://<apps-man-uaa>
+    APPSMAN_ADDRESS: https://<apps-man-api>
+    APPSMAN_USER: admin
+    APPSMAN_PASSWORD:  <apps-man-password>
 ```
 
-## Raw Data
 
-Note that for sorting reasons, we inject the `\u0001` and `\u0002`. This may not be a great
-implementation, but it helped keep the Ops Man and ERT in the order we wanted.
 
-You can query the application using the following route: `http://<Application Route>/versions`
 
-It will then return:
-```JSON
-{
-  "versions":{
-    "\u0001Ops Man":{
-      "ver":"1.7.13.0"
-    },
-    "\u0002ERT":{
-      "ver":"1.7.21-build.2"
-    },
-    "MySql Tile":{
-      "ver":"1.7.13"
-    }
-  }
-}
-```
 
-To include the stemcell versions add a query parameter named `scv` and set it to `true`.
-For example `http://<Application Route>/versions?scv=true` would return:
+    OPSMAN_UAA_ADDRESS: https://172.28.61.5/uaa
+    OPSMAN_ADDRESS: https://172.28.61.5
+    OPSMAN_USER: admin
+    OPSMAN_PASSWORD:  welcome1
+    APPSMAN_UAA_ADDRESS: https://uaa.system.lab06.den.ecsteam.io
+    APPSMAN_ADDRESS: https://api.system.lab06.den.ecsteam.io
 
-```JSON
-{
-  "versions":{
-    "\u0001Ops Man":{
-      "ver":"1.7.13.0"
-    },
-    "\u0002ERT":{
-      "ver":"1.7.21-build.2",
-      "sc":"3232.19"
-    },
-    "MySql Tile":{
-      "ver":"1.7.13",
-      "sc":"3232.19"
-    }
-  }
-}
-```
+    # TODO: We should get this from UAA
+    APPSMAN_USER: admin
+    APPSMAN_PASSWORD:  JPTvnTxOR_6-5YPfhUA3EWruvg1a26rg
+
+    BOSH_ADDRESS:
+
+    # TODO: We should get this from UAA
+    BOSH_USER: director
+    BOSH_PASSWORD: PBa0FoQtB0iFfLjWnDfTniAJtj_rFtM0
+
+
+
+
+
+
+
+
+## Routes
+
 
 ## Badges
 Badges have been removed and another project controls them now: https://github.com/ECSTeam/status-badge
@@ -129,3 +124,167 @@ GET /v2/stacks
 GET /v2/users
 GET /v2/users/uaa-id-309/spaces
 GET /v2/users/uaa-id-299/organizations
+
+
+
+
+
+
+
+
+
+
+// https://opsman-dev-api-docs.cfapps.io/?shell#retrieving-status-of-product-jobs
+
+// https://opsman-dev-api-docs.cfapps.io/?shell#listing-static-ip-assignments-for-product-jobs
+
+// https://opsman-dev-api-docs.cfapps.io/?shell#retrieving-manifest-for-a-deployed-product
+// GET /api/v0/deployed/products/:product_guid/manifest
+
+
+
+
+
+
+
+
+/*
+/////////
+	"/api/v0/deployed/products/:product-guid/variables"
+
+	{
+	  "variables": ["first-variable", "second-variable", "third-variable"]
+	}
+
+/////////
+	"/api/v0/deployed/products/:product-guid/variables?name=:variable_name"
+
+	{
+  	"credhub-password": "example-password"
+	}
+
+/////////
+	"/api/v0/deployed/products/:product_guid/status"
+
+	{
+	  "status": [
+	    {
+	      "job-name": "web_server-7f841fc2af9c2b357cc4",
+	      "index": 0,
+	      "az_guid": "ee61aa1e420ed3fdf276",
+	      "az_name": "first-az",
+	      "ips": [
+	        "10.85.42.58"
+	      ],
+	      "cid": "vm-448ef313-86ee-4049-87cf-764ca2fa97e7",
+	      "load_avg": [
+	        "0.00",
+	        "0.01",
+	        "0.03"
+	      ],
+	      "cpu": {
+	        "sys": "0.1",
+	        "user": "0.2",
+	        "wait": "0.3"
+	      },
+	      "memory": {
+	        "kb": "60632",
+	        "percent": "6"
+	      },
+	      "swap": {
+	        "kb": "0",
+	        "percent": "0"
+	      },
+	      "system_disk": {
+	        "inode_percent": "31",
+	        "percent": "42"
+	      },
+	      "ephemeral_disk": {
+	        "inode_percent": "0",
+	        "percent": "1"
+	      },
+	      "persistent_disk": {
+	        "inode_percent": "0",
+	        "percent": "0"
+	      }
+	    }
+	  ]
+	}
+
+/////////
+"/api/v0/deployed/products/:product_guid/static_ips"
+[
+{
+	"name": "job-type1-guid-partition-default-az-guid",
+	"ips": [
+		"192.168.163.4"
+	]
+},
+{
+	"name": "credentials-job-guid-partition-default-az-guid",
+	"ips": [
+		"192.168.163.7"
+	]
+}
+]
+
+//////////
+/api/v0/disk_types
+
+{
+  "disk_types": [
+    {
+      "name": "1024",
+      "builtin": true,
+      "size_mb": 1024
+    },
+    {
+      "name": "2048",
+      "builtin": true,
+      "size_mb": 2048
+    },
+    {
+      "name": "5120",
+      "builtin": true,
+      "size_mb": 5120
+    }
+  ]
+}
+
+
+
+//////////////
+/api/v0/vm_types
+
+{
+  "vm_types": [
+    {
+      "name": "nano",
+      "ram": 512,
+      "cpu": 1,
+      "ephemeral_disk": 1024,
+      "builtin": true
+    },
+    {
+      "name": "micro",
+      "ram": 1024,
+      "cpu": 1,
+      "ephemeral_disk": 2048,
+      "builtin": true
+    },
+    {
+      "name": "small.disk",
+      "ram": 2048,
+      "cpu": 1,
+      "ephemeral_disk": 16384,
+      "builtin": true
+      }
+  ]
+}
+
+
+///////////////////
+/api/v0/deployed/products/:product_guid/manifest
+
+/api/v0/diagnostic_report
+*/

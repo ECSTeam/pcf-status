@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ECSTeam/pcf-status/helpers"
-	"github.com/ECSTeam/pcf-status/models"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -22,69 +22,47 @@ const (
 	defaultWriteTimeout = 15
 )
 
-var (
-	routes = []helpers.RouteDefinition{
-		models.ProductCollectionRoutesDefinition,
-		models.ProductRoutesDefinition,
-		models.VMCollectionRoutesDefinition,
-		models.BuildpacksCollectionRoutesDefinition,
-		models.InfoRoutesDefinition,
-	}
-)
-
 // port and portFlag handle the port for this application. The default is
 // arbitrarily set to 8080.
 var (
 	portFlag = flag.Int("port", defaultPort, "The port to use.")
 	hostFlag = flag.String("host", "", "The host name.")
-
-	opsManAddrFlag  = flag.String("opsman", "", "The OpsMan address.")
-	opsUaaAddrFlag  = flag.String("opsmanuaa", "", "The OPsMan UAA address.")
-	opsUserFlag     = flag.String("opsmanuser", "", "The OpsMan user.")
-	opsPasswordFlag = flag.String("opsmanpassword", "", "The OpsMan password.")
-
-	appsManAddrFlag  = flag.String("appsman", "", "The AppsMan address.")
-	appsUaaAddrFlag  = flag.String("appsmanuaa", "", "The AppsMan UAA address.")
-	appsUserFlag     = flag.String("appsmanuser", "", "The AppsMan user.")
-	appsPasswordFlag = flag.String("appsmanpassword", "", "The AppsMan password.")
 )
 
 // APIs defines the api collection
 type APIs map[helpers.APIType]helpers.API
 
-// getParam from the env or cmd line. Env takes proirity.
-func getParam(env string, cmd *string) string {
-	param := os.Getenv(env)
-	if len(strings.TrimSpace(param)) <= 0 {
-		param = *cmd
-	}
-
-	log.Printf("[%s]: %s", env, param)
-	return param
-}
-
 // createAPIs will generate the collection of apis.
 func createAPIs() (apis APIs, err error) {
 
-	opsManUaa := getParam("OPSMAN_UAA_ADDRESS", opsUaaAddrFlag)
-	opsManAddr := getParam("OPSMAN_ADDRESS", opsManAddrFlag)
-	opsUser := getParam("OPSMAN_USER", opsUserFlag)
-	opsPassword := getParam("OPSMAN_PASSWORD", opsPasswordFlag)
+	param := os.Getenv("OPSMAN")
 
-	var api helpers.API
-	if api, err = helpers.NewOpsManAPI(opsManUaa, opsManAddr, opsUser, opsPassword); err == nil {
+	var config helpers.OpsManConfig
+	if err = json.Unmarshal([]byte(param), &config); err == nil {
 
-		apis = APIs{}
-		apis[helpers.OpsMan] = api
+		// First find the opsman API
+		var opsMan *helpers.OpsManAPI
+		if opsMan, err = helpers.NewOpsManAPI(config); err == nil {
 
-		appsManUaa := getParam("APPSMAN_UAA_ADDRESS", appsUaaAddrFlag)
-		appsManAddr := getParam("APPSMAN_ADDRESS", appsManAddrFlag)
-		appsUser := getParam("APPSMAN_USER", appsUserFlag)
-		appsPassword := getParam("APPSMAN_PASSWORD", appsPasswordFlag)
+			log.Printf("OpsMan: %T", opsMan)
+			apis = APIs{
+				helpers.None:   nil,
+				helpers.OpsMan: opsMan,
+			}
 
-		if api, err = helpers.NewAppsManAPI(appsManUaa, appsManAddr, appsUser, appsPassword); err == nil {
-			apis[helpers.AppsMan] = api
+			var api helpers.API
+			if api, err = helpers.NewAppsManAPI(opsMan); err == nil {
+				apis[helpers.AppsMan] = api
+			}
 		}
+	}
+
+	if err == nil {
+		for name, api := range apis {
+			log.Printf("API: %s [Type: %T] Available: %v", name, api, api != nil)
+		}
+	} else {
+		log.Printf("API Error: %s", err)
 	}
 
 	return apis, err
@@ -128,8 +106,17 @@ func main() {
 		}
 
 		for _, route := range routes {
-			log.Printf("Route: [%s] %s", route.Method, route.Path)
-			r.Methods(route.Method).Path(route.Path).Handler(route.Handler(apis[route.APIType]))
+
+			var handler http.Handler
+			custom := "raw"
+			if handler = route.RawHandler; handler == nil {
+				usedAPI := apis[route.APIType]
+				handler = route.Handler(usedAPI)
+				custom = "gen"
+			}
+
+			r.Methods(route.Method).Path(route.Path).Handler(handler)
+			log.Printf("Route (%s): [%s] %s", custom, route.Method, route.Path)
 		}
 
 		err = srv.ListenAndServe()
