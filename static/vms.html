@@ -1,0 +1,57 @@
+{{define "custom_script"}}
+<script>
+$.getJSON( "/models/vm_types", function( data ) {
+
+	var aid = "accordion";
+	$(".status-vm-types").append(`<div id="` + aid + `" class="col" role="tablist"></div>`)
+
+  $.each( data, function( key, val ) {
+
+		var bi = ""
+		if(val.builtin) {
+			bi = ` <small class="col-auto"><span class="badge badge-pill badge-info">Build In</span></small>`
+		}
+
+		var hid = "h_" + key;
+		var cid = "c_" + key;
+
+		$("#" + aid).append(
+			`<div class="card">
+		    <div class="card-header" role="tab" id="`+ hid +`">
+					<div class="row">
+		        <a class="col-auto mr-auto collapsed" data-toggle="collapse" href="#`+ cid +`" aria-expanded="false" aria-controls="`+ cid +`">
+		          ` + val.name + `
+		        </a> `+ bi + `
+					</div>
+		    </div>
+
+		    <div id="`+ cid +`" class="collapse" role="tabpanel" aria-labelledby="`+ hid +`" data-parent="#` + aid + `">
+		      <div class="card-body">
+						<dl class="row">
+							<dt class="col-sm-3">Disk</dt>
+							<dd class="col-sm-9">` + val.ephemeral_disk + `</dd>
+							<dt class="col-sm-3">CPUs</dt>
+							<dd class="col-sm-9">` + val.cpu + `</dd>
+							<dt class="col-sm-3">Ram</dt>
+							<dd class="col-sm-9">` + val.ram + `</dd>
+						</dl>
+		      </div>
+		    </div>
+		  </div>`);
+  });
+}).always(function() {
+	$(".status-vm-types i").remove();
+});
+</script>
+{{end}}
+
+{{define "contents"}}
+<div class="container">
+	<div class="row">
+		<h3>VM Types</h3>
+	</div>
+	<div class="row justify-content-md-center status-vm-types">
+		<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+	</div>
+</div>
+{{end}}
