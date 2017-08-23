@@ -43,8 +43,6 @@ func createAPIs() (apis APIs, err error) {
 		// First find the opsman API
 		var opsMan *helpers.OpsManAPI
 		if opsMan, err = helpers.NewOpsManAPI(config); err == nil {
-
-			log.Printf("OpsMan: %T", opsMan)
 			apis = APIs{
 				helpers.None:   nil,
 				helpers.OpsMan: opsMan,
@@ -57,11 +55,7 @@ func createAPIs() (apis APIs, err error) {
 		}
 	}
 
-	if err == nil {
-		for name, api := range apis {
-			log.Printf("API: %s [Type: %T] Available: %v", name, api, api != nil)
-		}
-	} else {
+	if err != nil {
 		log.Printf("API Error: %s", err)
 	}
 

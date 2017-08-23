@@ -11,6 +11,9 @@ import (
 // APIType defines the type of API to use.
 type APIType string
 
+// NavItemType defines the type of nav item.
+type NavItemType int
+
 const (
 
 	// OpsMan is the indicator of the OpsMan API.
@@ -21,6 +24,15 @@ const (
 
 	// None is the no api response
 	None = APIType("None")
+
+	// NavItemDefault is the default value.
+	NavItemDefault = NavItemType(0)
+
+	// NavItemCurrent is the current value.
+	NavItemCurrent = NavItemType(1)
+
+	// NavItemGroup is the group value.
+	NavItemGroup = NavItemType(2)
 )
 
 // navItems holds the collection of navigation items.
@@ -28,9 +40,13 @@ var navItems []NavItem
 
 // NavItem defines the navigation items.
 type NavItem struct {
-	Title   string
-	Current bool
-	Link    string
+	Title    string
+	Type     NavItemType
+	Link     string
+	SubLinks []struct {
+		Title string
+		Link  string
+	}
 }
 
 // RouteDefinition stores information about the route.
@@ -59,10 +75,50 @@ func StaticFiles(parts ...string) (route RouteDefinition) {
 // TemplateRoute defines the route
 func TemplateRoute(name string, path string, definition string) (route RouteDefinition) {
 
-	navItems = append(navItems, NavItem{
-		Title: name,
-		Link:  path,
-	})
+	title := name
+	group := ""
+	switch parts := strings.SplitN(name, "/", 2); len(parts) {
+	case 1:
+		navItems = append(navItems, NavItem{
+			Title: name,
+			Link:  path,
+			Type:  NavItemDefault,
+		})
+	case 2:
+
+		title = parts[1]
+		group = parts[0]
+
+		var found bool
+		for index, item := range navItems {
+			if item.Title == group {
+				found = true
+				navItems[index].SubLinks = append(item.SubLinks, struct {
+					Title string
+					Link  string
+				}{
+					Title: title,
+					Link:  path,
+				})
+			}
+		}
+
+		if !found {
+			navItems = append(navItems, NavItem{
+				Title: group,
+				Type:  NavItemGroup,
+				SubLinks: []struct {
+					Title string
+					Link  string
+				}{
+					{
+						Title: title,
+						Link:  path,
+					},
+				},
+			})
+		}
+	}
 
 	return RouteDefinition{
 		Method:  http.MethodGet,
@@ -79,21 +135,18 @@ func TemplateRoute(name string, path string, definition string) (route RouteDefi
 				var err error
 				var tmpl *template.Template
 				if tmpl, err = template.ParseFiles(paths...); err == nil {
-
 					data := struct {
 						Title    string
 						NavItems []NavItem
 					}{
-						Title:    name,
+						Title:    title,
 						NavItems: make([]NavItem, len(navItems)),
 					}
 
 					copy(data.NavItems, navItems)
 					for index, item := range data.NavItems {
-
-						if item.Title == name {
-							data.NavItems[index].Current = true
-							break
+						if item.Title == title || item.Title == group {
+							data.NavItems[index].Type |= NavItemCurrent
 						}
 					}
 

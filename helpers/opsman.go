@@ -17,8 +17,6 @@ type OpsManProducts []struct {
 	Name string `json:"installation_name"`
 	GUID string `json:"guid"`
 	Type string `json:"type"`
-
-	Links
 }
 
 // NewOpsManAPI creates a new api.

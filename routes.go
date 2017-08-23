@@ -15,12 +15,15 @@ var (
 		models.AppsManBuildpacksRoute,
 		models.AppsManStemcellsRoute,
 		models.AppsManInfoRoute,
+		helpers.StaticFiles("static", "images"),
 		helpers.StaticFiles("static", "fonts"),
 		helpers.StaticFiles("static", "js"),
 		helpers.StaticFiles("static", "css"),
 		helpers.TemplateRoute("Home", "/", "default.html"),
-		helpers.TemplateRoute("Releases", "/releases", "releases.html"),
+		helpers.TemplateRoute("VM/Instances", "/vms", "vms.html"),
+		helpers.TemplateRoute("VM/Types", "/vm_types", "vms_types.html"),
 		helpers.TemplateRoute("Stemcells", "/stemcells", "stemcells.html"),
-		helpers.TemplateRoute("VMs", "/vms", "vms.html"),
+		helpers.TemplateRoute("Buildpacks", "/buildpacks", "buildpacks.html"),
+		helpers.TemplateRoute("Releases", "/releases", "releases.html"),
 	}
 )

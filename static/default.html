@@ -1,21 +1,53 @@
 {{define "custom_script"}}
 <script>
-/*
-$.getJSON("/models/releases", function( data ) {
-  $.each( data, function( key, val ) {
-		$(".status-releases").append(
-			"<li class='list-group-item'>" + val + "</li>"
-		);
-  });
+$.getJSON("/models/info", function( data ) {
+	$(".status-info-iaas").text(data["iaas-type"]);
+	$(".status-info-version").text(data.version);
+}).always(function() {
+	$(".status-info-iaas i").remove();
+	$(".status-info-version i").remove();
 });
-*/
+$.getJSON("/models/products", function( data ) {
+	$(".status-info-products").append(`<div class="list-group d-flex col status-info-products-root"></div>`)
+  $.each( data, function( key, val ) {
+		$(".status-info-products-root").append(
+			`<div class="list-group-item list-group-item-action align-items-start">
+				<div class="d-flex justify-content-between">
+					<h5 class="mb-1">` + val.type + `</h5>
+					<small><span class="badge badge-primary">` + val.guid + `</span></small>
+				</div>
+				<p class="mb-1">` + val.installation_name + `</p>
+			</div>`);
+  });
+}).always(function() {
+	$(".status-info-products i").remove();
+});
 </script>
 {{end}}
 
 {{define "contents"}}
 <div class="container">
 	<div class="row">
-		<h3>TODO</h3>
+		<div class="col jumbotron">
+  		<h1 class="display-3">General</h1>
+			<hr class="my-4" />
+			<div class="row">
+				<div class="col-sm-1"></div>
+				<div class="col-sm-9">
+					<dl class="row">
+						<dd class="col-sm-2"><h5>Version</h5></dd>
+						<dt class="col-sm-10"><small class="text-muted status-info-version"><i class="fa fa-spinner fa-spin" style="font-size:24px"></i></small></dt>
+						<dd class="col-sm-2"><h5>Infrastructure</h5></dd>
+						<dt class="col-sm-10"><small class="text-muted status-info-iaas"><i class="fa fa-spinner fa-spin" style="font-size:24px"></i></small></dt>
+					</dl>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="container">
+	<div class="row justify-content-md-center status-info-products">
+			<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
 	</div>
 </div>
 {{end}}

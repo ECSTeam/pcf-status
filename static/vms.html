@@ -1,46 +1,37 @@
 {{define "custom_script"}}
 <script>
-$.getJSON( "/models/vm_types", function( data ) {
-
-	var aid = "accordion";
-	$(".status-vm-types").append(`<div id="` + aid + `" class="col" role="tablist"></div>`)
-
+$.getJSON( "/models/vms", function( data ) {
+	$(".status-vm-instances").append(`<div class="list-group d-flex col status-instances-root"></div>`)
   $.each( data, function( key, val ) {
+		var prod = val.product
+		console.log(prod)
+		$.each(val.instances, function(stem, vms) {
+			console.log(stem)
+				$(".status-instances-root").append(
+					`<div class="list-group-item list-group-item-action align-items-start">
+						<div class="d-flex justify-content-between">
+							<h5 class="mb-1">` + prod + `</h5>
+							<small><span class="badge badge-primary">` + stem + `</span></small>
+						</div>
+						<div class="row">
+							<div class="col-sm-1"></div>
+						  <div class="col-sm-9">
+								<dl class="row status-instances-` + prod + stem + `">
+								</dl>
+							</div>
+						</div>
+					</div>`)
 
-		var bi = ""
-		if(val.builtin) {
-			bi = ` <small class="col-auto"><span class="badge badge-pill badge-info">Build In</span></small>`
-		}
-
-		var hid = "h_" + key;
-		var cid = "c_" + key;
-
-		$("#" + aid).append(
-			`<div class="card">
-		    <div class="card-header" role="tab" id="`+ hid +`">
-					<div class="row">
-		        <a class="col-auto mr-auto collapsed" data-toggle="collapse" href="#`+ cid +`" aria-expanded="false" aria-controls="`+ cid +`">
-		          ` + val.name + `
-		        </a> `+ bi + `
-					</div>
-		    </div>
-
-		    <div id="`+ cid +`" class="collapse" role="tabpanel" aria-labelledby="`+ hid +`" data-parent="#` + aid + `">
-		      <div class="card-body">
-						<dl class="row">
-							<dt class="col-sm-3">Disk</dt>
-							<dd class="col-sm-9">` + val.ephemeral_disk + `</dd>
-							<dt class="col-sm-3">CPUs</dt>
-							<dd class="col-sm-9">` + val.cpu + `</dd>
-							<dt class="col-sm-3">Ram</dt>
-							<dd class="col-sm-9">` + val.ram + `</dd>
-						</dl>
-		      </div>
-		    </div>
-		  </div>`);
+				$.each(vms, function(name, qty) {
+					console.log(name)
+					$(".status-instances-" + prod + stem).append(
+							`<dt class="col-sm-3">` + name + `</dt>
+				 			 <dd class="col-sm-9">` + qty + `</dd>`)
+			 })
+		})
   });
 }).always(function() {
-	$(".status-vm-types i").remove();
+	$(".status-vm-instances i").remove();
 });
 </script>
 {{end}}
@@ -48,9 +39,9 @@ $.getJSON( "/models/vm_types", function( data ) {
 {{define "contents"}}
 <div class="container">
 	<div class="row">
-		<h3>VM Types</h3>
+		<h3>VM Instances</h3>
 	</div>
-	<div class="row justify-content-md-center status-vm-types">
+	<div class="row justify-content-md-center status-vm-instances">
 		<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
 	</div>
 </div>

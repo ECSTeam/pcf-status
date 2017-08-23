@@ -21,12 +21,7 @@ var OpsManProductCollectionRoute = helpers.RouteDefinition{
 			var err error
 			var products helpers.OpsManProducts
 			if opsman, ok := api.(*helpers.OpsManAPI); ok {
-				if products, err = opsman.GetProducts(); err == nil {
-					for index, prod := range products {
-						href := helpers.MakeURL(req, "products", prod.GUID)
-						products[index].Append("self", href)
-					}
-				}
+				products, err = opsman.GetProducts()
 			}
 
 			return products, err

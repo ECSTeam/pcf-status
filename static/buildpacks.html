@@ -1,0 +1,43 @@
+{{define "custom_script"}}
+<script>
+$.getJSON( "/models/buildpacks", function( data ) {
+	$(".status-buildpacks").append(`<div class="list-group d-flex col status-buildpacks-root"></div>`)
+  $.each( data, function( key, val ) {
+		$(".status-buildpacks-root").append(
+			`<div class="list-group-item list-group-item-action align-items-start">
+				<div class="d-flex justify-content-between">
+					<h5 class="mb-1">` + val.name + `</h5>
+				</div>
+				<div class="row">
+					<div class="col-sm-1"></div>
+				  <div class="col-sm-9">
+						<dl class="row">
+							<dt class="col-sm-3">File</dt>
+							<dd class="col-sm-9">` + val.filename + `</dd>
+							<dt class="col-sm-3">GUID</dt>
+							<dd class="col-sm-9">` + val.guid + `</dd>
+							<dt class="col-sm-3">Created</dt>
+							<dd class="col-sm-9">` + val.created_at + `</dd>
+							<dt class="col-sm-3">Last Updated</dt>
+							<dd class="col-sm-9">` + val.updated_at + `</dd>
+						</dl>
+					</div>
+				</div>
+			</div>`);
+  });
+}).always(function() {
+	$(".status-buildpacks i").remove();
+});
+</script>
+{{end}}
+
+{{define "contents"}}
+<div class="container">
+	<div class="row">
+		<h3>Buildpacks</h3>
+	</div>
+	<div class="row justify-content-md-center status-buildpacks">
+		<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+	</div>
+</div>
+{{end}}
