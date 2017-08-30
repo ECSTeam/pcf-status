@@ -9,30 +9,23 @@ Simply push the application to you cloud foundry.
 > cf push -f manifest.yml
 ```
 
-for some of the older foundations, you may need to specify the go buildpack:
+For some of the older foundations, you may need to specify the go buildpack:
 ```Bash
 > cf push -f manifest.yml -b https://github.com/cloudfoundry/go-buildpack.git
 ```
 
-```
-> go run main.go -opsmanuaa https://172.28.61.5/uaa -opsman https://172.28.61.5 -opsmanuser admin -opsmanpassword welcome1 -appsmanuaa https://uaa.system.lab06.den.ecsteam.io -appsmanpassword JPTvnTxOR_6-5YPfhUA3EWruvg1a26rg -appsmanuser admin -appsman https://api.system.lab06.den.ecsteam.io
-```
-
+Add dependancies using glide.
 ```
 > glide install
 ```
-
 
 ## Configuration
 
 Apply the following configuration to the application instance.
 
-| Environment Variable | Required | Type    | Details |
-|:--------------------:|----------|:-------:|:--------|
-| `UAA_ADDRESS`        |   Yes    |  URL    | URL to the UAA and Ops Manager instance.          |
-| `OPSMAN_USER`        |   Yes    | String  | Ops Man user that you want to use.                |
-| `OPSMAN_PASSWORD`    |   Yes    | String  | Password to the Ops Man user.                     |
-| `DEBUG`              |    No    | Boolean | Show useful info while it is executing. |
+| Environment Variable | Required | Details                                  |
+|:--------------------:|----------|:-----------------------------------------|
+| `OPSMAN`             |   Yes    | A JSON object with an `address` of the opsman server, the `user` and `passwrd` of the user to use. |
 
 ### Sample Manifest
 
@@ -44,247 +37,309 @@ applications:
   buildpack: go_buildpack
   instances: 1
   env:
-    OPSMAN_UAA_ADDRESS: https://<ops-man-ip>/uaa
-    OPSMAN_ADDRESS: https://<ops-man-ip>
-    OPSMAN_USER: admin
-    OPSMAN_PASSWORD:  <ops-man-password>
-    APPSMAN_UAA_ADDRESS: https://<apps-man-uaa>
-    APPSMAN_ADDRESS: https://<apps-man-api>
-    APPSMAN_USER: admin
-    APPSMAN_PASSWORD:  <apps-man-password>
+    OPSMAN: |
+      {
+        "address": "<opsman-address>",
+        "user": "<user>",
+        "password": "<password>"
+      }
 ```
 
+## API Routes
 
+### [GET] `/models/buildpacks`
 
+Get the collection of buildpacks
 
-
-    OPSMAN_UAA_ADDRESS: https://172.28.61.5/uaa
-    OPSMAN_ADDRESS: https://172.28.61.5
-    OPSMAN_USER: admin
-    OPSMAN_PASSWORD:  welcome1
-    APPSMAN_UAA_ADDRESS: https://uaa.system.lab06.den.ecsteam.io
-    APPSMAN_ADDRESS: https://api.system.lab06.den.ecsteam.io
-
-    # TODO: We should get this from UAA
-    APPSMAN_USER: admin
-    APPSMAN_PASSWORD:  JPTvnTxOR_6-5YPfhUA3EWruvg1a26rg
-
-    BOSH_ADDRESS:
-
-    # TODO: We should get this from UAA
-    BOSH_USER: director
-    BOSH_PASSWORD: PBa0FoQtB0iFfLjWnDfTniAJtj_rFtM0
-
-
-
-
-
-
-
-
-## Routes
-
-
-## Badges
-Badges have been removed and another project controls them now: https://github.com/ECSTeam/status-badge
-
-
-https://apidocs.cloudfoundry.org/
-
-GET /v2/apps
-GET /v2/apps/ac6a28be-42d2-49da-9a69-65da93a0e505/stats
-GET /v2/apps/cd897c8c-3171-456d-b5d7-3c87feeabbd1/summary
-GET /v2/apps/ed5512e3-511f-49b3-b30a-b3630e782d03/instances
-GET /v2/apps/684c2eae-28db-45f2-8ad5-fe26e2d9f60c/routes
-GET /v2/apps/2a3820bb-febd-4c90-ab66-80faa4362142/service_bindings
-
-GET /v2/app_usage_events?results-per-page=1&after_guid=5a3416b0-cf3c-425a-a14c-45a317c497ed
-
-GET /v2/info
-
-GET /v2/private_domains
-
-GET /v2/routes
-
-GET /v2/routes/81464707-0f48-4ab9-87dc-667ef15489fb/apps
-
-GET /v2/route_mappings
-
-GET /v2/security_groups
-GET /v2/security_groups/1452e164-0c3e-4a6c-b3c3-c40ad9fd0159/spaces
-
-GET /v2/service_brokers
-
-GET /v2/service_instances
-
-GET /v2/services
-
-GET /v2/spaces
-GET /v2/stacks
-GET /v2/users
-GET /v2/users/uaa-id-309/spaces
-GET /v2/users/uaa-id-299/organizations
-
-
-
-
-
-
-
-
-
-
-// https://opsman-dev-api-docs.cfapps.io/?shell#retrieving-status-of-product-jobs
-
-// https://opsman-dev-api-docs.cfapps.io/?shell#listing-static-ip-assignments-for-product-jobs
-
-// https://opsman-dev-api-docs.cfapps.io/?shell#retrieving-manifest-for-a-deployed-product
-// GET /api/v0/deployed/products/:product_guid/manifest
-
-
-
-
-
-
-
-
-/*
-/////////
-	"/api/v0/deployed/products/:product-guid/variables"
-
-	{
-	  "variables": ["first-variable", "second-variable", "third-variable"]
-	}
-
-/////////
-	"/api/v0/deployed/products/:product-guid/variables?name=:variable_name"
-
-	{
-  	"credhub-password": "example-password"
-	}
-
-/////////
-	"/api/v0/deployed/products/:product_guid/status"
-
-	{
-	  "status": [
-	    {
-	      "job-name": "web_server-7f841fc2af9c2b357cc4",
-	      "index": 0,
-	      "az_guid": "ee61aa1e420ed3fdf276",
-	      "az_name": "first-az",
-	      "ips": [
-	        "10.85.42.58"
-	      ],
-	      "cid": "vm-448ef313-86ee-4049-87cf-764ca2fa97e7",
-	      "load_avg": [
-	        "0.00",
-	        "0.01",
-	        "0.03"
-	      ],
-	      "cpu": {
-	        "sys": "0.1",
-	        "user": "0.2",
-	        "wait": "0.3"
-	      },
-	      "memory": {
-	        "kb": "60632",
-	        "percent": "6"
-	      },
-	      "swap": {
-	        "kb": "0",
-	        "percent": "0"
-	      },
-	      "system_disk": {
-	        "inode_percent": "31",
-	        "percent": "42"
-	      },
-	      "ephemeral_disk": {
-	        "inode_percent": "0",
-	        "percent": "1"
-	      },
-	      "persistent_disk": {
-	        "inode_percent": "0",
-	        "percent": "0"
-	      }
-	    }
-	  ]
-	}
-
-/////////
-"/api/v0/deployed/products/:product_guid/static_ips"
+#### Sample Response
+```JSON
 [
-{
-	"name": "job-type1-guid-partition-default-az-guid",
-	"ips": [
-		"192.168.163.4"
-	]
-},
-{
-	"name": "credentials-job-guid-partition-default-az-guid",
-	"ips": [
-		"192.168.163.7"
-	]
-}
-]
-
-//////////
-/api/v0/disk_types
-
-{
-  "disk_types": [
     {
-      "name": "1024",
-      "builtin": true,
-      "size_mb": 1024
+        "name": "staticfile_buildpack",
+        "filename": "staticfile_buildpack-cached-v1.4.11.zip",
+        "guid": "516ba0d6-1e27-4c9b-bbe2-fb9c6d00a940",
+        "created_at": "2017-08-04T13:38:24Z",
+        "updated_at": "2017-08-04T13:38:24Z"
     },
     {
-      "name": "2048",
-      "builtin": true,
-      "size_mb": 2048
+        "name": "java_buildpack_offline",
+        "filename": "java-buildpack-offline-v3.18.zip",
+        "guid": "3cdef2b7-1dbf-4f9f-a6fb-a7a57e294a2c",
+        "created_at": "2017-08-04T13:38:24Z",
+        "updated_at": "2017-08-04T13:38:28Z"
     },
     {
-      "name": "5120",
-      "builtin": true,
-      "size_mb": 5120
+        "name": "ruby_buildpack",
+        "filename": "ruby_buildpack-cached-v1.6.44.zip",
+        "guid": "567c219c-be1f-49ec-b852-3794e5e4e4a7",
+        "created_at": "2017-08-04T13:38:25Z",
+        "updated_at": "2017-08-04T13:38:29Z"
+    },
+    {
+        "name": "nodejs_buildpack",
+        "filename": "nodejs_buildpack-cached-v1.6.3.zip",
+        "guid": "2ab6b2a6-595c-40a4-bb3c-a57926c333f9",
+        "created_at": "2017-08-04T13:38:28Z",
+        "updated_at": "2017-08-04T13:38:31Z"
+    },
+    {
+        "name": "go_buildpack",
+        "filename": "go_buildpack-cached-v1.8.5.zip",
+        "guid": "fadfa871-f4bb-4ea1-8fdd-e7a6415ea5bc",
+        "created_at": "2017-08-04T13:38:29Z",
+        "updated_at": "2017-08-04T13:38:33Z"
+    },
+    {
+        "name": "python_buildpack",
+        "filename": "python_buildpack-cached-v1.5.20.zip",
+        "guid": "5c8b2f39-0ccb-488f-b56f-733d36bb67ef",
+        "created_at": "2017-08-04T13:38:31Z",
+        "updated_at": "2017-08-04T13:38:37Z"
+    },
+    {
+        "name": "php_buildpack",
+        "filename": "php_buildpack-cached-v4.3.38.zip",
+        "guid": "1d8189ea-4953-4cd7-9ca8-b03694b4d984",
+        "created_at": "2017-08-04T13:38:33Z",
+        "updated_at": "2017-08-04T13:38:38Z"
+    },
+    {
+        "name": "dotnet_core_buildpack",
+        "filename": "dotnet-core_buildpack-cached-v1.0.22.zip",
+        "guid": "483a1093-673e-4dc8-9e3a-d938430f659a",
+        "created_at": "2017-08-04T13:38:37Z",
+        "updated_at": "2017-08-04T13:39:02Z"
+    },
+    {
+        "name": "binary_buildpack",
+        "filename": "binary_buildpack-cached-v1.0.13.zip",
+        "guid": "9d8f48fe-01ad-4592-8324-19585cc62e92",
+        "created_at": "2017-08-04T13:38:38Z",
+        "updated_at": "2017-08-04T13:38:38Z"
     }
-  ]
-}
+]
+```
 
+### [GET] `/models/info`
 
+Get general information about the platform.
 
-//////////////
-/api/v0/vm_types
-
+#### Sample Response
+```JSON
 {
-  "vm_types": [
-    {
-      "name": "nano",
-      "ram": 512,
-      "cpu": 1,
-      "ephemeral_disk": 1024,
-      "builtin": true
-    },
-    {
-      "name": "micro",
-      "ram": 1024,
-      "cpu": 1,
-      "ephemeral_disk": 2048,
-      "builtin": true
-    },
-    {
-      "name": "small.disk",
-      "ram": 2048,
-      "cpu": 1,
-      "ephemeral_disk": 16384,
-      "builtin": true
-      }
-  ]
+    "iaas-type": "vsphere",
+    "version": "1.12.0.0"
 }
+```
 
+### [GET] `/models/products`
 
-///////////////////
-/api/v0/deployed/products/:product_guid/manifest
+Get the collection of installed products (tiles).
 
-/api/v0/diagnostic_report
-*/
+#### Sample Response
+```JSON
+[
+    {
+        "installation_name": "p-bosh",
+        "guid": "p-bosh-43bdb35efc3c504823e4",
+        "type": "p-bosh"
+    },
+    {
+        "installation_name": "cf-712c1d330ebea47e9e1e",
+        "guid": "cf-712c1d330ebea47e9e1e",
+        "type": "cf"
+    },
+    {
+        "installation_name": "pivotal-mysql-a0606c50a3894ed40af3",
+        "guid": "pivotal-mysql-a0606c50a3894ed40af3",
+        "type": "pivotal-mysql"
+    }
+]
+```
+
+### [GET] `/models/products/{guid}`
+
+Get the details of a product.
+
+#### Sample Response
+```JSON
+{
+    "status": [
+        {
+            "az_guid": "az1",
+            "az_name": null,
+            "cid": "vm-de71b4de-3ae8-434b-828e-5677318fa208",
+            "cpu": {
+                "sys": "1.5",
+                "user": "0.7",
+                "wait": "0.0"
+            },
+            "ephemeral_disk": {
+                "inode_percent": "1",
+                "percent": "6"
+            },
+            "index": 0,
+            "ips": [
+                "172.28.61.72"
+            ],
+            "job-name": "diego_cell",
+            "load_avg": [
+                "0.02",
+                "0.10",
+                "0.09"
+            ],
+            "memory": {
+                "kb": "2328936",
+                "percent": "14"
+            },
+            "persistent_disk": null,
+            "swap": {
+                "kb": "13020",
+                "percent": "0"
+            },
+            "system_disk": {
+                "inode_percent": "30",
+                "percent": "36"
+            }
+        },
+				...
+    ]
+}
+```
+
+### [GET] `/models/releases`
+
+Get the release names.
+
+```JSON
+[
+    "loggregator-91.0.0-3421.9.0.tgz",
+    "nodejs-offline-buildpack-1.6.3-3421.9.0.tgz",
+    "php-offline-buildpack-4.3.38-3421.9.0.tgz",
+    "nfs-volume-1.0.6-3421.9.0.tgz",
+    "syslog-migration-7.0.0-3421.9.0.tgz",
+    "release-service-metrics-1.5.7-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "haproxy-8.3.0-3421.9.0.tgz",
+    "release-syslog-migration-5.0.0-on-ubuntu-trusty-stemcell-3363.25.tgz",
+    "cf-backup-and-restore-0.0.9-3421.9.0.tgz",
+    "nats-22.0.0-3421.9.0.tgz",
+    "notifications-36.0.0-3421.9.0.tgz",
+    "python-offline-buildpack-1.5.20-3421.9.0.tgz",
+    "java-offline-buildpack-3.18.0-3421.9.0.tgz",
+    "release-dedicated-mysql-0.17.3-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "release-loggregator-87.0.0-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "release-consul-165.0.0-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "uaa-41.0.0-3421.9.0.tgz",
+    "cf-autoscaling-94.0.0-3421.9.0.tgz",
+    "capi-1.35.0-3421.9.0.tgz",
+    "scalablesyslog-8.0.0-3421.9.0.tgz",
+    "diego-1.22.0-3421.9.0.tgz",
+    "pivotal-account-1.6.0-3421.9.0.tgz",
+    "service-backup-18.1.2-3421.9.0.tgz",
+    "cf-mysql-36.0.0-3421.9.0.tgz",
+    "garden-runc-1.9.0-3421.9.0.tgz",
+    "push-apps-manager-release-662.0.3-3421.9.0.tgz",
+    "mysql-monitoring-8.5.0-3421.9.0.tgz",
+    "routing-0.159.0-3421.9.0.tgz",
+    "release-dedicated-mysql-adapter-0.25.4-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "staticfile-offline-buildpack-1.4.11-3421.9.0.tgz",
+    "statsd-injector-1.0.28-3421.9.0.tgz",
+    "ruby-offline-buildpack-1.6.44-3421.9.0.tgz",
+    "consul-171.0.0-3421.9.0.tgz",
+    "release-on-demand-service-broker-0.16.1-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "cflinuxfs2-1.138.0-3421.9.0.tgz",
+    "release-mysql-backup-1.34.0-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "go-offline-buildpack-1.8.5-3421.9.0.tgz",
+    "release-mysql-monitoring-8.2.0-on-ubuntu-trusty-stemcell-3363.25.tgz",
+    "dotnet-core-offline-buildpack-1.0.22-3421.9.0.tgz",
+    "release-service-backup-18.1.2-on-ubuntu-trusty-stemcell-3363.26.tgz",
+    "notifications-ui-28.0.0-3421.9.0.tgz",
+    "cf-smoke-tests-36.0.0-3421.9.0.tgz",
+    "mysql-backup-1.35.0-3421.9.0.tgz",
+    "cf-networking-1.2.0-3421.9.0.tgz",
+    "binary-offline-buildpack-1.0.13-3421.9.0.tgz"
+]
+```
+
+### [GET] `/models/stemcells`
+
+Get information about the stemcells.
+
+```JSON
+[
+    {
+        "source": "cf-712c1d330ebea47e9e1e",
+        "alias": "bosh-vsphere-esxi-ubuntu-trusty-go_agent",
+        "os": "ubuntu-trusty",
+        "version": "3421.9"
+    },
+    {
+        "source": "pivotal-mysql-a0606c50a3894ed40af3",
+        "alias": "bosh-vsphere-esxi-ubuntu-trusty-go_agent",
+        "os": "ubuntu-trusty",
+        "version": "3363.26"
+    }
+]
+```
+
+### [GET] `/models/vm_types`
+
+Get information about the types of virtual machines available.
+
+```JSON
+[
+    {
+        "name": "nano",
+        "ram": 512,
+        "cpu": 1,
+        "ephemeral_disk": 8192,
+        "builtin": true
+    },
+    {
+        "name": "micro",
+        "ram": 1024,
+        "cpu": 1,
+        "ephemeral_disk": 8192,
+        "builtin": true
+    },
+		....
+    {
+        "name": "2xlarge.cpu",
+        "ram": 16384,
+        "cpu": 16,
+        "ephemeral_disk": 65536,
+        "builtin": true
+    }
+]
+```
+
+### [GET] `/models/vms`
+
+Get information about the allocated virtual machines.
+
+```JSON
+[
+    {
+        "product": "cf-712c1d330ebea47e9e1e",
+        "instances": {
+            "bosh-vsphere-esxi-ubuntu-trusty-go_agent": {
+                "large.disk": 1,
+                "medium.disk": 4,
+                "medium.mem": 1,
+                "micro": 32,
+                "nano": 1,
+                "small": 7,
+                "xlarge.disk": 3
+            }
+        }
+    },
+    {
+        "product": "pivotal-mysql-a0606c50a3894ed40af3",
+        "instances": {
+            "bosh-vsphere-esxi-ubuntu-trusty-go_agent": {
+                "micro": 7
+            }
+        }
+    }
+]
+```

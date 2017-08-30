@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const (
@@ -41,7 +42,9 @@ type baseAPI struct {
 	address      string
 	user         string
 	password     string
-	token        string
+	accessExp    time.Time
+	accessToken  string
+	refreshToken string
 	urlCreator   func(items ...string) string
 }
 
@@ -101,10 +104,88 @@ func CreateHandler(api API, handler func(*http.Request, API) (interface{}, error
 	})
 }
 
+// decodeResponse will decode the response
+func (api *baseAPI) decodeResponse(resp *http.Response) (token string, err error) {
+	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusBadRequest {
+
+		var data struct {
+			TokenType    string `json:"token_type"`
+			AccessToken  string `json:"access_token"`
+			RefreshToken string `json:"refresh_token"`
+			Expires      int    `json:"expires_in"`
+		}
+
+		var resBody []byte
+		if resBody, err = ioutil.ReadAll(resp.Body); err == nil {
+			if err = json.Unmarshal(resBody, &data); err == nil {
+				token = fmt.Sprintf("%s %s", strings.Title(data.TokenType), data.AccessToken)
+				log.Printf("Got token type: %s", data.TokenType)
+
+				exp := time.Now().Add(time.Duration(data.Expires) * time.Second)
+				log.Printf("Token expires: %s", exp)
+
+				api.refreshToken = data.RefreshToken
+				api.accessToken = token
+				api.accessExp = exp
+			}
+		}
+	} else {
+
+		details := ""
+		var resBody []byte
+		if resBody, err = ioutil.ReadAll(resp.Body); err == nil {
+			log.Printf("Error Body [%s]: %s", resp.Status, string(resBody))
+
+			var errorDetails struct {
+				Description string `json:"error_description"`
+			}
+
+			if err = json.Unmarshal(resBody, &errorDetails); err == nil {
+				details = fmt.Sprintf("\nDetails: %s", errorDetails.Description)
+			}
+		}
+
+		err = NewErrorf("UAA authorization failure: [%d] %s%s", resp.StatusCode, resp.Status, details)
+	}
+
+	return token, err
+}
+
 // getToken return the auth token.
 func (api *baseAPI) getToken() (token string, err error) {
 
-	if token = api.token; len(token) == 0 {
+	// First clear out any bad tokens:
+	// https://docs.cloudfoundry.org/api/uaa/#without-authorization
+	if api.accessExp.Before(time.Now()) {
+		log.Printf("Clearing old token.")
+		api.accessToken = ""
+		api.refreshToken = ""
+	}
+
+	// https://docs.cloudfoundry.org/api/uaa/#refresh-token
+	// TODO: We need to check the token?!
+	/*
+		POST /oauth/token HTTP/1.1
+		Content-Type: application/x-www-form-urlencoded
+		Accept: application/json
+		Host: localhost
+
+		client_id=app&client_secret=appclientsecret&
+		grant_type=refresh_token&token_format=opaque&
+		refresh_token=0cb0e2670f7642e9b501a79252f90f02-r
+
+
+		{
+		  "access_token" : "d16d9de1584b4e40b59dcbe954db3b4b",
+		  "token_type" : "bearer",
+		  "refresh_token" : "0cb0e2670f7642e9b501a79252f90f02-r",
+		  "expires_in" : 43199,
+		  "scope" : "scim.userids cloud_controller.read password.write cloud_controller.write openid",
+		  "jti" : "d16d9de1584b4e40b59dcbe954db3b4b"
+		}
+	*/
+
+	if token = api.accessToken; len(token) == 0 {
 
 		log.Printf("Getting new auth token: %s", api.user)
 
@@ -134,49 +215,10 @@ func (api *baseAPI) getToken() (token string, err error) {
 
 				log.Printf("Getting token from: %s", addr)
 				if resp, err = client.Do(req); err == nil {
-					if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusBadRequest {
-
-						var data struct {
-							TokenType   string `json:"token_type"`
-							AccessToken string `json:"access_token"`
-
-							// TODO: Include the following fields...
-							// expires_in
-							// refresh_token
-						}
-
-						var resBody []byte
-						if resBody, err = ioutil.ReadAll(resp.Body); err == nil {
-							if err = json.Unmarshal(resBody, &data); err == nil {
-								token = fmt.Sprintf("%s %s", strings.Title(data.TokenType), data.AccessToken)
-								log.Printf("Got token type: %s", data.TokenType)
-								api.token = token
-							}
-						}
-					} else {
-
-						details := ""
-						var resBody []byte
-						if resBody, err = ioutil.ReadAll(resp.Body); err == nil {
-							log.Printf("Error Body [%s]: %s", resp.Status, string(resBody))
-
-							var errorDetails struct {
-								Description string `json:"error_description"`
-							}
-
-							if err = json.Unmarshal(resBody, &errorDetails); err == nil {
-								details = fmt.Sprintf("\nDetails: %s", errorDetails.Description)
-							}
-						}
-
-						err = NewErrorf("UAA authorization failure: [%d] %s%s", resp.StatusCode, resp.Status, details)
-					}
+					token, err = api.decodeResponse(resp)
 				}
 			}
 		}
-	} else {
-		// https://docs.cloudfoundry.org/api/uaa/#refresh-token
-		// TODO: We need to check the token!
 	}
 
 	return token, err
