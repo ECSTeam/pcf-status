@@ -13,7 +13,7 @@ $.getJSON("/models/products", function( data ) {
 		$(".status-info-products-root").append(
 			`<div class="list-group-item list-group-item-action align-items-start">
 				<div class="d-flex justify-content-between">
-					<h5 class="mb-1">` + val.type + `</h5>
+					<h5 class="mb-1"><a href="/products/` + val.guid + `">` + val.type + `</a></h5>
 					<small><span class="badge badge-primary">` + val.guid + `</span></small>
 				</div>
 				<p class="mb-1">` + val.installation_name + `</p>

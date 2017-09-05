@@ -1,0 +1,81 @@
+{{define "custom_script"}}
+<script>
+$.getJSON("/models/products/{{.ID}}", function( data ) {
+	$(".status-product").append(`<table class="table table-bordered">
+		<thead>
+			<tr>
+				<th>Product</th>
+				<th>IPs</th>
+				<th>Memory</th>
+				<th>Ephemeral Disk</th>
+				<th>System Disk</th>
+				<th>Persistent Disk</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>`)
+
+  $.each( data.status, function( key, val ) {
+
+		console.log(val);
+
+		var ipAddresses = "";
+		$.each(val.ips, function(k, v) {
+			switch (k) {
+				case 0:
+					ipAddresses = v;
+					break;
+				default:
+					ipAddresses = ", " + v;
+					break;
+			}
+		})
+
+		var mem = "";
+		if (!!val.memory) {
+			mem = (val.memory.kb / 1024).toFixed(2)  + " MB (used: " + val.memory.percent + "%)";
+		}
+
+		var edisk = "";
+		if (!!val.ephemeral_disk) {
+			edisk = "inode " + val.ephemeral_disk.inode_percent  + " % (used: " + val.ephemeral_disk.percent + "%)";
+		}
+
+		var sdisk = "";
+		if (!!val.system_disk) {
+			sdisk = "inode " + val.system_disk.inode_percent  + " % (used: " + val.system_disk.percent + "%)";
+		}
+
+		var pdisk = "";
+		if (!!val.persistent_disk) {
+			pdisk = "inode " + val.persistent_disk.inode_percent  + " % (used: " + val.persistent_disk.percent + "%)";
+		}
+
+		$(".status-product table tbody").append(
+			`<tr>
+				 <th scope="row">` + val["job-name"] + `<br/><span class="badge badge-pill badge-primary">` + val.cid + `</span></th>
+				 <td>` + ipAddresses + `</td>
+				 <td>` + mem + `</td>
+				 <td>` + edisk + `</td>
+				 <td>` + sdisk + `</td>
+				 <td>` + pdisk + `</td>
+			</tr>`
+		);
+  });
+}).always(function() {
+	$(".status-product i").remove();
+});
+</script>
+{{end}}
+
+{{define "contents"}}
+<div class="container">
+	<div class="row">
+		<h3>Product Details <small>{{.ID}}</small></h3>
+	</div>
+	<div class="row justify-content-md-center status-product">
+		<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+	</div>
+</div>
+{{end}}

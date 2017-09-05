@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // APIType defines the type of API to use.
@@ -77,46 +79,48 @@ func TemplateRoute(name string, path string, definition string) (route RouteDefi
 
 	title := name
 	group := ""
-	switch parts := strings.SplitN(name, "/", 2); len(parts) {
-	case 1:
-		navItems = append(navItems, NavItem{
-			Title: name,
-			Link:  path,
-			Type:  NavItemDefault,
-		})
-	case 2:
-
-		title = parts[1]
-		group = parts[0]
-
-		var found bool
-		for index, item := range navItems {
-			if item.Title == group {
-				found = true
-				navItems[index].SubLinks = append(item.SubLinks, struct {
-					Title string
-					Link  string
-				}{
-					Title: title,
-					Link:  path,
-				})
-			}
-		}
-
-		if !found {
+	if len(name) > 0 {
+		switch parts := strings.SplitN(name, "/", 2); len(parts) {
+		case 1:
 			navItems = append(navItems, NavItem{
-				Title: group,
-				Type:  NavItemGroup,
-				SubLinks: []struct {
-					Title string
-					Link  string
-				}{
-					{
+				Title: name,
+				Link:  path,
+				Type:  NavItemDefault,
+			})
+		case 2:
+
+			title = parts[1]
+			group = parts[0]
+
+			var found bool
+			for index, item := range navItems {
+				if item.Title == group {
+					found = true
+					navItems[index].SubLinks = append(item.SubLinks, struct {
+						Title string
+						Link  string
+					}{
 						Title: title,
 						Link:  path,
+					})
+				}
+			}
+
+			if !found {
+				navItems = append(navItems, NavItem{
+					Title: group,
+					Type:  NavItemGroup,
+					SubLinks: []struct {
+						Title string
+						Link  string
+					}{
+						{
+							Title: title,
+							Link:  path,
+						},
 					},
-				},
-			})
+				})
+			}
 		}
 	}
 
@@ -136,11 +140,17 @@ func TemplateRoute(name string, path string, definition string) (route RouteDefi
 				var tmpl *template.Template
 				if tmpl, err = template.ParseFiles(paths...); err == nil {
 					data := struct {
+						ID       string
 						Title    string
 						NavItems []NavItem
 					}{
 						Title:    title,
 						NavItems: make([]NavItem, len(navItems)),
+					}
+
+					// Set the variable if it exists.
+					if variables := mux.Vars(r); len(variables) > 0 {
+						data.ID, _ = variables["id"]
 					}
 
 					copy(data.NavItems, navItems)

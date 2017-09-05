@@ -108,6 +108,7 @@ func CreateHandler(api API, handler func(*http.Request, API) (interface{}, error
 func (api *baseAPI) decodeResponse(resp *http.Response) (token string, err error) {
 	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusBadRequest {
 
+		// Defined here: https://docs.cloudfoundry.org/api/uaa/#password-grant
 		var data struct {
 			TokenType    string `json:"token_type"`
 			AccessToken  string `json:"access_token"`

@@ -71,13 +71,13 @@
 		<div class="row">
 		</div>
 
-		{{template "contents"}}
+		{{template "contents" .}}
 
 		<script>window.jQuery || document.write('<script src="/static/js/jquery.min.js"><\/script>')</script>
 		<script src="/static/js/popper.min.js"></script>
 		<script src="/static/js/bootstrap.min.js"></script>
 		<script src="/static/js/ie10-viewport-bug-workaround.js"></script>
-		{{template "custom_script"}}
+		{{template "custom_script" .}}
   </body>
 </html>
 {{end}}

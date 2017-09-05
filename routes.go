@@ -20,6 +20,7 @@ var (
 		helpers.StaticFiles("static", "js"),
 		helpers.StaticFiles("static", "css"),
 		helpers.TemplateRoute("Home", "/", "default.html"),
+		helpers.TemplateRoute("", "/products/{id}", "products.html"),
 		helpers.TemplateRoute("VM/Instances", "/vms", "vms.html"),
 		helpers.TemplateRoute("VM/Types", "/vm_types", "vms_types.html"),
 		helpers.TemplateRoute("Stemcells", "/stemcells", "stemcells.html"),

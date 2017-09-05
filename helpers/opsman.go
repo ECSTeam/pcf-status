@@ -13,6 +13,8 @@ type OpsManAPI struct {
 }
 
 // OpsManProducts defines the collection of products.
+// Defined by: GET /api/v0/deployed/products
+// Documentation: https://opsman-dev-api-docs.cfapps.io/?shell#deployed-products
 type OpsManProducts []struct {
 	Name string `json:"installation_name"`
 	GUID string `json:"guid"`
@@ -60,6 +62,9 @@ func NewOpsManAPI(config OpsManConfig) (api *OpsManAPI, err error) {
 
 // GetCredentials will return the credentials by reference.
 func (api *OpsManAPI) GetCredentials(references ...string) (user string, password string, err error) {
+
+	// Type documented here:
+	// https://opsman-dev-api-docs.cfapps.io/?shell#fetching-credentials
 	var credentials struct {
 		Creds struct {
 			Value struct {
