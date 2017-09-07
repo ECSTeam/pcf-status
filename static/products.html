@@ -1,6 +1,7 @@
 {{define "custom_script"}}
 <script>
 $.getJSON("/models/products/{{.ID}}", function( data ) {
+/*
 	$(".status-product").append(`<table class="table table-bordered">
 		<thead>
 			<tr>
@@ -10,6 +11,18 @@ $.getJSON("/models/products/{{.ID}}", function( data ) {
 				<th>Ephemeral Disk</th>
 				<th>System Disk</th>
 				<th>Persistent Disk</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>`)
+*/
+	$(".status-product").append(`<table class="table table-bordered">
+		<thead>
+			<tr>
+				<th>Product</th>
+				<th>IPs</th>
+				<th>Storage</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -34,33 +47,30 @@ $.getJSON("/models/products/{{.ID}}", function( data ) {
 
 		var mem = "";
 		if (!!val.memory) {
-			mem = (val.memory.kb / 1024).toFixed(2)  + " MB (used: " + val.memory.percent + "%)";
+			mem = `<dl class="row"><dt class="col-sm-3">Memory</dt><dd class="col-sm-9">` + (val.memory.kb / 1024).toFixed(2)  + ` <small>MB</small> (` + val.memory.percent + `%)</dd>`;
 		}
 
 		var edisk = "";
 		if (!!val.ephemeral_disk) {
-			edisk = "inode " + val.ephemeral_disk.inode_percent  + " % (used: " + val.ephemeral_disk.percent + "%)";
+			edisk = `<dt class="col-sm-3">Ephemeral Disk</dt><dd class="col-sm-9"><small>inode</small> ` + val.ephemeral_disk.inode_percent  + `% (` + val.ephemeral_disk.percent + `%)</dd>`;
 		}
 
 		var sdisk = "";
 		if (!!val.system_disk) {
-			sdisk = "inode " + val.system_disk.inode_percent  + " % (used: " + val.system_disk.percent + "%)";
+			sdisk = `<dt class="col-sm-3">System Disk</dt><dd class="col-sm-9"><small>inode</small> ` + val.system_disk.inode_percent  + `% (` + val.system_disk.percent + `%)</dd>`;
 		}
 
 		var pdisk = "";
 		if (!!val.persistent_disk) {
-			pdisk = "inode " + val.persistent_disk.inode_percent  + " % (used: " + val.persistent_disk.percent + "%)";
+			pdisk = `<dt class="col-sm-3">Persistent Disk</dt><dd class="col-sm-9"><small>inode</small> ` + val.persistent_disk.inode_percent  + `% (` + val.persistent_disk.percent + `%)</dd></dl></td>`;
 		}
 
 		$(".status-product table tbody").append(
 			`<tr>
 				 <th scope="row">` + val["job-name"] + `<br/><span class="badge badge-pill badge-primary">` + val.cid + `</span></th>
 				 <td>` + ipAddresses + `</td>
-				 <td>` + mem + `</td>
-				 <td>` + edisk + `</td>
-				 <td>` + sdisk + `</td>
-				 <td>` + pdisk + `</td>
-			</tr>`
+				 <td>` + mem + edisk + sdisk + pdisk +
+			`</tr>`
 		);
   });
 }).always(function() {
